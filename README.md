@@ -1,5 +1,6 @@
 # yoyleCity_reworked
-I try to get it to work in recent processong 4 and build a kite-city
+I got it to work in recent processong 4 to build a kite-city
+But there ara still some minor bugs to fix.
 original creator: carykh
 
 # from creator carykh:
