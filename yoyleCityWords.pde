@@ -1,68 +1,108 @@
-//good seeds = 63558, 85052, 87279, 5598, 60908, 81404, 22703, 28671, 19003 (water), 82839, 89424
-//Good seed = 43762
-int seed = 23589;//int(random(0,100000));
+//base-values
+//good seeds: 5598, 19003 (water), 22703, 28671, 60908, 63558, 81404, 82839, 85052, 87279, 89424
+//Good seed: 43762
+//old seed 23589
+int seed = 65536; //int(random(0,100000));
 int cityLocX = 140;
-int cityLocY = 180;
-
-int full = 0; // <---CHANGED!
-int camMode = 0; // <---CHANGED! //0 = move around, 1 = follow track
+int cityLocY = 160;
 float slope = 1;
-
-PImage bb;
 int bbWidth = 120;
 int bbHeight = 80;
 float xoff = 0.0;
 int w = 400;
 int h = 400;
-float[][] elev = new float[h][w];
-float[][] water = new float[h][w];
-float[][] city = new float[h][w];
-int[][][] vansInSpot = new int[h][w][0];
-int[][] bridges = new int[h][w];
-boolean[][] tri = new boolean[h][w];
-int treeRes = 2;
-float[][] trees = new float[h*treeRes][w*treeRes];
-int buildingCount = 80;
-int buildingCount2 = 20;
-int buildingCount3 = 3;
-Building [][][] city2 = new Building[h][w][buildingCount];
-float[][][] ripple = new float[h][w][10];
-int[][][] tileColors = new int[h][w][3];
-float[][] treeTileColors = new float[h*2][w*2];
 float minH = 1000;
 float maxH = -1000;
 float minH2 = 1000;
 float maxH2 = -1000;
 float inf = 0.01;
-float[] cam = {w/2,200,20,w/2,-20000,-1190,0,0,-1,PI/3,36,188};
-float[] prevCam = new float[8];
-float speed = 0.5;
-float dg = 0;
-int[][] colors = {{129,123,91},{400,283,243},{0,0,0},{16,70,12},{42,100,30},{70,70,70},{100,100,100},{230,230,230},{255,255,255}};//{{50,20,40},{94,30,96},{94,30,96},{131,46,141},{43,102,48},{70,70,70},{100,100,100},{230,230,230},{255,255,255}};
 int fog = 400;
-int[] bg = {153,207,243};//{250,230,100};
-int[] wc = {23,56,125};
-PImage sun, flag, roadImage, roadImage2, roadImage3, roadImage4, window,robotBack,robotSide,robotTop,wheel;
+
+//images
+PImage bb, sun, flag, window, wheel,
+roadImage, roadImage2, roadImage3, roadImage4,
+robotBack, robotSide, robotTop;
 PImage[][] beginSign = new PImage[3][40];
 PImage[][] endSign = new PImage[3][40];
 PImage[] robotFace = new PImage[40];
-float sunHeight = 100;
+
+//terrain-structure
+float[][] elev = new float[h][w];
+float[][][] ripple = new float[h][w][10];
+boolean[][] tri = new boolean[h][w];
+
+//colors
+int[][] colors = {{191, 175, 63}, {255, 247, 191}, {15, 63, 15}, {31, 127, 31}, {47, 191, 47}, {63, 63, 63}, {127, 127, 127}, {191, 191, 191}, {255, 255, 255}};
+//original yoyle city:
+//{{50, 20, 40}, {94, 30, 96}, {94, 30, 96}, {131, 46, 141}, {43, 102, 48}, {70, 70, 70}, {100, 100, 100}, {230, 230, 230}, {255, 255, 255}};
+//natural colors:
+//{{129, 123, 91}, {400, 283, 243}, {50, 106, 40}, {16, 70, 12}, {42, 100, 30}, {70, 70, 70}, {100, 100, 100}, {230, 230, 230}, {255, 255, 255}};
+//natural colors with a black hight layer:
+//{{129, 123, 91}, {400, 283, 243}, {0, 0, 0}, {16, 70, 12}, {42, 100, 30}, {70, 70, 70}, {100, 100, 100}, {230, 230, 230}, {255, 255, 255}};
+int[] bg = {127, 191, 255};
+//original yoyle city:
+//{250,230,100};
+int[] wc = {0, 64, 127};
+color[] flowerColors = {color(255, 0, 0),color(255, 127, 0),color(255, 255, 0),color(0, 127, 255),color(0, 0, 255),
+color(159,0,255),color(255, 0, 255)};
+int[] sunColor = {255, 255, 255};
+int[] treeColor = {47, 191, 47};
+
+int[][][] tileColors = new int[h][w][3];
+float[][] treeTileColors = new float[h * 2][w * 2];
+
+//city
+float[][] city = new float[h][w];
+int buildingCount = 80;
+int buildingCount2 = 20;
+int buildingCount3 = 3;
+Building [][][] city2 = new Building[h][w][buildingCount];
+float citySize = 0.02;
+float cityMax = 0;
+float cityTree = -0.13;
+
+//trees
+int treeRes = 2;
+float[][] trees = new float[h*treeRes][w*treeRes];
+int[] tree = {7,10,13};
+
+//water
+float[][] water = new float[h][w];
+int[][] bridges = new int[h][w];
 float riverDepth = 0.6;
 float bankDepth = 0.002;
+float oceanDepth = 0.07;
+
+//vans
+PShape van;
+int vanCount = 6000;
+int[][][] vansInSpot = new int[h][w][0];
+Van[] vans = new Van[vanCount];
+float driveSpeed = 0.006;
+float turnSpeed = 0.002;
+
+//camera
+int full = 0; // <---CHANGED!
+int camMode = 0; // <---CHANGED! //0 = move around, 1 = follow track
+float[] cam = {w / 2, h / 2, 20, w / 2, -20000, -1190, 0, 0, -1, PI / 3, 36, 188};
+float[] prevCam = new float[8];
+float[][] camCoor = {};
+float speed = 0.5;
+float dg = 0;
+
+float sunHeight = 100;
+float haloSize = 500;
+int cloudCount = 300;
+Cloud[] clouds = new Cloud[cloudCount];
+
 int timer = 0;
-float citySize = 0.02;
 float roadWidth = 0.15;
 float roadHeightBase = 0.001;
 float roadHeight = 0.001;
 float edgeMargin = 0.01;
-color[] flowerColors = {color(255,0,0),color(255,255,0),color(255,0,255),color(255,120,0),color(0,0,255),
-color(0,120,255),color(120,0,255)};
 float[] len = {120,200,300};
 int leafCount = 40;
-int[] tree = {7,10,13};
 float wireWidth = 0.0025;
-float oceanDepth = 0.07;
-float cityMax = 0;
 float stadDist = 10000;
 int YNX = 0;
 int YNY = 0;
@@ -73,22 +113,11 @@ float[][][][][]YNCoords = new float[2][2][91][33][4];
 float brh = 1.5;
 float brrh = 0.1;
 float roadRes = 0.1;
-int[] sunColor = {255, 255, 255};
-float haloSize = 500;
-int cloudCount = 300;
-Cloud[] clouds = new Cloud[cloudCount];
-float cityTree = -0.13;
-int[] treeColor = {15,45,10};
 float sludgeProg = cityLocY + 80;
 float sludgeSpeed = 0.0003;
-float driveSpeed = 0.006;
+
 float totSec = 0;
 int sumill = 0;
-float turnSpeed = 0.002;
-PShape van;
-int vanCount = 6000;
-Van[] vans = new Van[vanCount];
-float[][] camCoor = {};
 
 float frL = 0;
 int camModeTime = 36;
@@ -104,14 +133,15 @@ void setup() {
   noiseSeed(seed);
   randomSeed(seed);
   noiseDetail(6, 0.5);
+  bb = loadImage("bb.png");
   sun = loadImage("sun.png");
+  flag = loadImage("flag.png");
+  window = loadImage("window.png");
   roadImage = loadImage("roadNew.png");
   roadImage2 = loadImage("roadNew2.png");
   roadImage3 = loadImage("roadNew3.png");
   roadImage4 = loadImage("roadNew4.png");
-  flag = loadImage("flag.png");
-  window = loadImage("window.png");
-  bb = loadImage("bb.png");
+
   frL = 0;
   for(int i = 0; i < camCoor.length; i++){
     frL += camCoor[i][10];
@@ -158,14 +188,14 @@ void setup() {
         if(ef > 1) ef = 1;
         dx = 6-(6-dx)*ef;
       }
-      elev[y][x] += (-float(y)-10.0*dx/float(y+10))*inf;
+      elev[y][x] += (float(y)/float(y+10))*inf;
       //water[y][x] = -(min(max(abs(noise((float(x)+float(h))*0.01, (float(y)/2+float(h))*0.01)-0.5),-0.013),0.013)-0.013)*riverDepth;
       for(int z = 0; z < 10; z++){
         ripple[y][x][z] = noise(x,y,z)*0.18+0.9;
       }
       city[y][x] = -1;
-      if(x >= cityLocX && x < cityLocX + bbWidth && y >= cityLocY && y < cityLocV + bbHeight){
-        color c = bb.pixels[x - cityLocX + (y - cityLocY) * bbHeight];
+      if(x >= cityLocX && x < cityLocX + bbWidth && y >= cityLocY && y < cityLocY + bbHeight){
+        color c = bb.pixels[x - cityLocX + (y - cityLocY) * bbWidth];
         if(red(c) > 5){
           city[y][x] = random(0.0015, 0.0021) * (red(c) - 5);
         }else if(pow(random(0,1),2) > green(c) / 255){
@@ -301,7 +331,7 @@ void setup() {
       if(thisElev > 0.7 || thisElev < 0.17) trees[y][x] = -0.012;
       if(trees[y][x] > 0){
         if(x2 >= cityLocX && x2 < cityLocX + bbWidth && y2 >= cityLocY && y2 < cityLocY + bbHeight){
-          color c = bb.pixels[x2 - cityLocX + (y2 - cityLoc) * bbWidth];
+          color c = bb.pixels[x2 - cityLocX + (y2 - cityLocY) * bbWidth];
           trees[y][x] -= (1 - green(c) / 255.0) * 0.0121;
         }
       }
@@ -2114,7 +2144,7 @@ class Van{
   float bridgeEndX = 0;
   float bridgeEndY = 0;
   float bridgeLength = 0;
-  int[] c = {(int)random(0,255),(int)random(0,255),(int)random(0,255)};
+  int[] c = {255, 223, 0};
   Van(float ix, float iy, float ivx, float ivy, float itx, float ity, int idire, int ittt, int itd){
     x = ix;
     y = iy;
@@ -2221,8 +2251,8 @@ void setShade4(float n, float x, float y, float z){
   fill(fogger(col,bg2,tween));
 }
 void setBlankBuilding(int x, int y, int z){
-  int col[] = new int[0];
   Leaf[] leaves = new Leaf[0];
+  int[] col = {255, 223, 0};
   city2[y][x][z] = new Building(0,0,1,1,1,1,0,col,col,col,col,0,1,1,1,1,10,0,0,0,leaves);
 }
 void setTint(int[] n,float shade,float x, float y, float z){
@@ -2303,22 +2333,10 @@ void setNewBuilding(int x, int y, int z){
   }else{
     br2 = random(0,0.2);
   }
-  int[] col = HSL2RGB(random(0,360),random(0,1),br);
-  int[] col2 = HSL2RGB(random(0,360),random(0,1),br2);
-  int[] col3;
+  int[] col = {255, 223, 0};
+  int[] col2 = {255, 223, 0};
+  int[] col3 = {255, 223, 0};
   Leaf[] leaves = new Leaf[0];
-  if(roof%9 <= 1){
-    col3 = HSL2RGB(random(0,360),random(0,0.4),random(0.1,1));
-  }else{
-    if(random(0,1) < 0.5){
-      col3 = new int[3];
-      for(int i = 0; i < 3; i++){
-        col3[i] = int(col[i]*0.6);
-      }
-    }else{
-      col3 = HSL2RGB(random(0,360),random(0.1,0.9),random(0.1,0.7));
-    }
-  }
   int[] flowers = {0};
   int n = 0;
   boolean garden = (z >= 1 && city2[y][x][z-1].t == 2);
@@ -2744,9 +2762,9 @@ void drawLand(int x, int y){
     popMatrix();*/
     if(y == int(sludgeProg)){  
       pushMatrix();
-      float xBot = x+roadWidth*0.52;
-      float yBot = y+wayz;
-      float zBot = (inter(inter(e00,e01,roadWidth*0.52),inter(e10,e11,roadWidth*0.52),wayz)*slope+roadHeight);
+      float xBot = 200;
+      float yBot = 200;
+      float zBot = (inter(inter(e00,e01, 0),inter(e10,e11,0),wayz)*slope+roadHeight);
       translate(xBot,yBot,zBot);
       scale(0.0007);
       scale(-1,-1,1);
