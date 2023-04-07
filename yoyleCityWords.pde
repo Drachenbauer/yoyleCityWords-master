@@ -1,8 +1,9 @@
 //base-values
 //good seeds: 5598, 19003 (water), 22703, 28671, 60908, 63558, 81404, 82839, 85052, 87279, 89424
 //Good seed: 43762
-//old seed 23589
-int seed = 65536; //int(random(0,100000));
+//old seed: 23589
+//my seeds: 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536
+int seed = 16384; //int(random(0,100000));
 int cityLocX = 140;
 int cityLocY = 160;
 float slope = 1;
@@ -125,174 +126,241 @@ int currentKeyFrame = 0;
 int innerFrame = 0;
 boolean lastWasLong = false;
 
-void setup() {
-  van = loadShape("supervan.obj");
-  van.scale(20);
-  sphereDetail(9);
+
+void setup()
+{
   println("Seed: "+seed);
   noiseSeed(seed);
   randomSeed(seed);
   noiseDetail(6, 0.5);
+  van = loadShape("supervan.obj");
+  van.scale(20);
   bb = loadImage("bb.png");
   sun = loadImage("sun.png");
   flag = loadImage("flag.png");
   window = loadImage("window.png");
+  wheel = loadImage("wheel.png");
   roadImage = loadImage("roadNew.png");
   roadImage2 = loadImage("roadNew2.png");
   roadImage3 = loadImage("roadNew3.png");
   roadImage4 = loadImage("roadNew4.png");
-
-  frL = 0;
-  for(int i = 0; i < camCoor.length; i++){
-    frL += camCoor[i][10];
-  }
-  for(int i = 0; i < 8; i++){
-    prevCam[i] = -9999;
-  }
-  for(int j = 0; j < 40; j++){
-    String k;
-    if(j < 9){
-      k = "000"+(j+1);
-    }else{
-      k = "00"+(j+1);
-    }
-    robotFace[j] = loadImage("robotFace"+k+".png");
-  }
   robotBack = loadImage("robotBack.png");
   robotSide = loadImage("robotSide.png");
   robotTop = loadImage("robotTop.png");
-  wheel = loadImage("wheel.png");
-  for(int i = 0; i < 3; i++){
-    for(int j = 0; j < 40; j++){
+  sphereDetail(9);
+  frL = 0;
+  textureMode(IMAGE);
+  vansInSpot = new int[h][w][0];
+  
+  for(int i = 0; i < camCoor.length; i++)
+  {
+    frL += camCoor[i][10];
+  }
+  
+  for(int i = 0; i < 8; i++)
+  {
+    prevCam[i] = -9999;
+  }
+  
+  for(int j = 0; j < 40; j++){
+    String k;
+    
+    if(j < 9)
+    {
+      k = "000"+(j+1);
+    }
+    else
+    {
+      k = "00"+(j+1);
+    }
+    
+    robotFace[j] = loadImage("robotFace"+k+".png");
+  }
+  
+  for(int i = 0; i < 3; i++)
+  {
+    for(int j = 0; j < 40; j++)
+    {
       int j2 = (j+10)%40;
       String k;
-      if(j2 < 9){
+      
+      if(j2 < 9)
+      {
         k = "000"+(j2+1);
-      }else{
+      }
+      else
+      {
         k = "00"+(j2+1);
       }
+      
       beginSign[i][j] = loadImage("begin"+(i+1)+"v"+k+".png");
       endSign[i][j] = loadImage("end"+(i+1)+"v"+k+".png");
     }
   }
-  textureMode(IMAGE);
-  vansInSpot = new int[h][w][0];
-  for(int y = 0; y < h; y++){
-    for(int x = 0; x < w; x++){
+  
+  for(int y = 0; y < h; y++)
+  {
+    for(int x = 0; x < w; x++)
+    {
       vansInSpot[y][x] = new int[0];
       bridges[y][x] = 0;
       elev[y][x] = noise(float(x)*0.01, float(y)*0.01);
+      
+      if (elev[y][x] <= 0)
+      {
+        elev[y][x] = 0.01
+      }
+      
       float dx = abs(float(x-w/2));
-      if(dx < 6){
+      
+      if(dx < 6)
+      {
         float ef = y/10+0.5;
         if(ef > 1) ef = 1;
         dx = 6-(6-dx)*ef;
       }
+      
       elev[y][x] += (float(y)/float(y+10))*inf;
       //water[y][x] = -(min(max(abs(noise((float(x)+float(h))*0.01, (float(y)/2+float(h))*0.01)-0.5),-0.013),0.013)-0.013)*riverDepth;
-      for(int z = 0; z < 10; z++){
+      
+      for(int z = 0; z < 10; z++)
+      {
         ripple[y][x][z] = noise(x,y,z)*0.18+0.9;
       }
+      
       city[y][x] = -1;
-      if(x >= cityLocX && x < cityLocX + bbWidth && y >= cityLocY && y < cityLocY + bbHeight){
+      
+      if(x >= cityLocX && x < cityLocX + bbWidth && y >= cityLocY && y < cityLocY + bbHeight)
+      {
         color c = bb.pixels[x - cityLocX + (y - cityLocY) * bbWidth];
-        if(red(c) > 5){
+        
+        if(red(c) > 5)
+        {
           city[y][x] = random(0.0015, 0.0021) * (red(c) - 5);
-        }else if(pow(random(0,1),2) > green(c) / 255){
+        }
+        else if(pow(random(0,1),2) > green(c) / 255)
+        {
           city[y][x] = -0.01;
-        }else{
+        }
+        else
+        {
           city[y][x] = -1;
         }
       }
-      if(abs(y-h/2) > 145 || abs(x-w/2) > 145){
+      
+      if(abs(y-h/2) > 145 || abs(x-w/2) > 145)
+      {
         city[y][x] = -1;
       }
+      
       if(elev[y][x] > maxH) maxH = elev[y][x];
       if(elev[y][x] < minH) minH = elev[y][x];
-    }
-  }
-  for(int y = 0; y < h; y++){
-    for(int x = 0; x < w; x++){
-      elev[y][x] = pow((elev[y][x]-minH)/(maxH-minH),2.8);
-      elev[y][x] -= water[y][x];
-      if(elev[y][x] < oceanDepth){
+
+      //elev[y][x] = pow((elev[y][x]-minH)/(maxH-minH),2.8);
+      //elev[y][x] -= water[y][x];
+      
+      if(elev[y][x] < oceanDepth)
+      {
         water[y][x] = max(water[y][x], oceanDepth-elev[y][x]);
       }
+      
       water[y][x] -= bankDepth;
       float d = dist(x,y,w*0.5,h*0.6);
       float effect = min(max(10*(h-0.6),0),1);
-      if(d > h*0.33){
+      
+      if(d > h*0.33)
+      {
         float d2 = d-h*0.33;
-        elev[y][x] -= pow(d2,2)*0.00001*effect;
+        #elev[y][x] -= pow(d2,2)*0.00001*effect;
       }
-      if(elev[y][x] > maxH2) maxH2 = elev[y][x];
-      if(elev[y][x] < minH2) minH2 = elev[y][x];
-    }
-  }
-  for(int y = 0; y < h; y++){
-    for(int x = 0; x < w; x++){
-      elev[y][x] = (elev[y][x]-minH2)/(maxH2-minH2);
+      
+      if(elev[y][x] > maxH2)
+      {
+        maxH2 = elev[y][x];
+      }
+      
+      if(elev[y][x] < minH2)
+      {
+        minH2 = elev[y][x];
+      ]
+
+      //elev[y][x] = (elev[y][x]-minH2)/(maxH2-minH2);
       tileColors[y][x] = colorify(x,y);
+      
       if(city[y][x] > cityMax && dry(x,y) && dry(x+1,y) && dry(x,y+1) && dry(x+1,y+1) && 
-      abs(elev[y][x]-elev[y][x-1]) < 0.0025 && abs(elev[y][x]-elev[y-1][x]) < 0.0025){
+      abs(elev[y][x]-elev[y][x-1]) < 0.0025 && abs(elev[y][x]-elev[y-1][x]) < 0.0025)
+      {
         cityMax = city[y][x];
         YNX = x;
         YNY = y;
       }
     }
   }
-  for(int y = 0; y < h-1; y++){
-    for(int x = 0; x < w-1; x++){
-      //if(city[y][x] >= 0){
-        float s1 = elev[y][x]+elev[y+1][x+1];
-        float s2 = elev[y+1][x]+elev[y][x+1];
-        tri[y][x] = (s1 >= s2);
-      /*}else{
-        float s1 = abs(elev[y][x]-elev[y+1][x+1]);
-        float s2 = abs(elev[y+1][x]-elev[y][x+1]);
-        tri[y][x] = (s1 >= s2);
-      }*/
-      if(city[y][x] >= 0 && dry(x,y)){
-        for(int z = 0; z < buildingCount; z++){
+  for(int y = 0; y < h - 1; y++)
+  {
+    for(int x = 0; x < w - 1; x++)
+    {
+      float s1 = elev[y][x]+elev[y+1][x+1];
+      float s2 = elev[y+1][x]+elev[y][x+1];
+      tri[y][x] = (s1 >= s2);
+
+      if(city[y][x] >= 0 && dry(x,y))
+      {
+        for(int z = 0; z < buildingCount; z++)
+        {
           setNewBuilding(x,y,z);
           int iter = 0;
-          while(iter < 50 && collides(x,y,z)){
+          
+          while(iter < 50 && collides(x,y,z))
+          {
             setNewBuilding(x,y,z);
             iter++;
           }
-          if(iter >= 49){
+          
+          if(iter >= 49)
+          {
             city2[y][x][z].t = 0;
           }
         }
-        /*for(int z = 0; z < buildingCount; z++){
-          city2[y][x][z].w += random(0,0.07);
-          city2[y][x][z].l += random(0,0.07);
-          city2[y][x][z].w = min(1-city2[y][x][z].x,city2[y][x][z].w);
-          city2[y][x][z].l = min(1-city2[y][x][z].y,city2[y][x][z].l);
-        }*/
-      }else if(dry(x,y) && city[y][x] >= cityTree){
-        for(int z = 0; z < buildingCount3; z++){
+      }
+      else if(dry(x,y) && city[y][x] >= cityTree)
+      {
+        for(int z = 0; z < buildingCount3; z++)
+        {
           setNewBuilding(x,y,z);
         }
-      }else{
-        for(int z = 0; z < buildingCount; z++){
+      }
+      else
+      {
+        for(int z = 0; z < buildingCount; z++)
+        {
           setBlankBuilding(x,y,z);
         }
       }
+      
       if((abs(y-h/2) < 145 && abs(x-w/2) < 145) && city[y][x] < 0 && dry(x,y)
-      && (x <= w/2-2 || x >= w/2+4)){
+      && (x <= w/2-2 || x >= w/2+4))
+      {
         boolean ok = true;
-        for(int x2 = x-1; x2 <= x+2; x2++){
-          for(int y2 = y-1; y2 <= y+1; y2++){
-            if(city[y2][x2] >= 0 || !dry(x2,y2) || (bridges[y2][x2] != 0 && y2 >= y && x2 >= x)){
+        
+        for(int x2 = x-1; x2 <= x+2; x2++)
+        {
+          for(int y2 = y-1; y2 <= y+1; y2++)
+          {
+            if(city[y2][x2] >= 0 || !dry(x2,y2) || (bridges[y2][x2] != 0 && y2 >= y && x2 >= x))
+            {
               ok = false;
               break;
             }
           }
         }
-        if(ok && abs(elev[y][x+1]-elev[y][x-1]) < 0.003 && abs(elev[y+1][x]-elev[y-1][x]) < 0.003){
+        
+        if(ok && abs(elev[y][x+1]-elev[y][x-1]) < 0.003 && abs(elev[y+1][x]-elev[y-1][x]) < 0.003)
+        {
           float d = dist(x,y,YNX,YNY);
-          if(d < stadDist){
+          
+          if(d < stadDist)
+          {
             stadDist = d;
             YSX = x;
             YSY = y;
@@ -301,72 +369,102 @@ void setup() {
       }
     }
   }
-  for(int i = 0; i < vanCount; i++){
+  
+  for(int i = 0; i < vanCount; i++)
+  {
     int x = 4;
     int y = 4;
-    while(city[y][x] <= 0){
+    
+    while(city[y][x] <= 0)
+    {
       x = (int)(random(cityLocX,cityLocX + bbWidth));
       y = (int)(random(cityLocY,cityLocY + bbHeight));
     }
+    
     vans[i] = new Van(x+random(0.3,0.999),y+roadWidth*0.3,random(-driveSpeed,0),0.00,0.00,0.00,2,-1,-1);
     addVan(i,x,y);
   }
-  for(int y = 0; y < h*treeRes; y++){
-    for(int x = 0; x < w*treeRes; x++){
+  
+  for(int y = 0; y < h*treeRes; y++)
+  {
+    for(int x = 0; x < w*treeRes; x++)
+    {
       int x2 = int(x/2);
       int y2 = int(y/2);
       trees[y][x] = random(-0.002,0.01);
       float treePlace = noise(float(x)*0.1, float(y)*0.1)-max(0.5,city[y2][x2]*2+1);
       treePlace = min(max(treePlace,-0.012),0);
       trees[y][x] += treePlace;
-      for(int y3 = max(y2-1,0); y3 <= min(y2+1,h-1); y3++){
-        for(int x3 = max(x2-1,0); x3 <= min(x2+1,w-1); x3++){
-          if(water[y3][x3] > 0){
+      
+      for(int y3 = max(y2-1,0); y3 <= min(y2+1,h-1); y3++)
+      {
+        for(int x3 = max(x2-1,0); x3 <= min(x2+1,w-1); x3++)
+        {
+          if(water[y3][x3] > 0)
+          {
             trees[y][x] = -0.012;
             break;
           }
         }
       }
+      
       float thisElev = getElev2(x,y);
-      if(thisElev > 0.7 || thisElev < 0.17) trees[y][x] = -0.012;
-      if(trees[y][x] > 0){
-        if(x2 >= cityLocX && x2 < cityLocX + bbWidth && y2 >= cityLocY && y2 < cityLocY + bbHeight){
+      
+      if(thisElev > 0.7 || thisElev < 0.17)
+      {
+        trees[y][x] = -0.012;
+      }
+      
+      if(trees[y][x] > 0)
+      {
+        if(x2 >= cityLocX && x2 < cityLocX + bbWidth && y2 >= cityLocY && y2 < cityLocY + bbHeight)
+        {
           color c = bb.pixels[x2 - cityLocX + (y2 - cityLocY) * bbWidth];
           trees[y][x] -= (1 - green(c) / 255.0) * 0.0121;
         }
       }
-      if(thisElev < 0.26){
+      
+      if(thisElev < 0.26)
+      {
         trees[y][x] -= (0.26 - thisElev) / 0.06*0.012;
       }
-    }
-  }
-  for(int y = 0; y < h*treeRes; y++){
-    for(int x = 0; x < w*treeRes; x++){
+      
       treeTileColors[y][x] = treeColorify(x,y);
     }
   }
-  for(int i = 0; i < cloudCount; i++){
+  
+  for(int i = 0; i < cloudCount; i++)
+  {
     float x = random(-100,400);
     float y = random(-100,400);
     float low = 30.0;
     float high = 160.0;
-    if(y > 170){
+    
+    if(y > 170)
+    {
       low = 50;
     }
+    
     float zmin = elev[int(min(max(y,0),h-1))][int(min(max(x,0),w-1))]*slope;
     clouds[i] = new Cloud(x,y,random(zmin+low,zmin+high),pow(random(1,3),2));
   }
+  
   size(1024,768,P3D);
   noStroke();
   perspective(cam[9],float(width)/height,0.001,1000);
   noLights();
   sumill = millis();
-  for(int i = 0; i < 2000; i++){ //move vans around a bit before starting!
+  
+  for(int i = 0; i < 2000; i++)
+  {
+    //move vans around a bit before starting!
     moveVans();
   }
 }
 
-void draw() {
+
+void draw()
+{
   float camHeight = cam[2];
   if(cam[0] >= 0 && cam[0] < w && cam[1] >= 0 && cam[1] < h){
     camHeight = abs(elev[round(cam[1])][round(cam[0])]*slope-cam[2]);
