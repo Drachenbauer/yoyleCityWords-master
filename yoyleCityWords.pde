@@ -152,52 +152,6 @@ void setup()
   textureMode(IMAGE);
   vansInSpot = new int[h][w][0];
   
-  for(int i = 0; i < camCoor.length; i++)
-  {
-    frL += camCoor[i][10];
-  }
-  
-  for(int i = 0; i < 8; i++)
-  {
-    prevCam[i] = -9999;
-  }
-  
-  for(int j = 0; j < 40; j++){
-    String k;
-    
-    if(j < 9)
-    {
-      k = "000"+(j+1);
-    }
-    else
-    {
-      k = "00"+(j+1);
-    }
-    
-    robotFace[j] = loadImage("robotFace"+k+".png");
-  }
-  
-  for(int i = 0; i < 3; i++)
-  {
-    for(int j = 0; j < 40; j++)
-    {
-      int j2 = (j+10)%40;
-      String k;
-      
-      if(j2 < 9)
-      {
-        k = "000"+(j2+1);
-      }
-      else
-      {
-        k = "00"+(j2+1);
-      }
-      
-      beginSign[i][j] = loadImage("begin"+(i+1)+"v"+k+".png");
-      endSign[i][j] = loadImage("end"+(i+1)+"v"+k+".png");
-    }
-  }
-  
   for(int y = 0; y < h; y++)
   {
     for(int x = 0; x < w; x++)
@@ -205,11 +159,6 @@ void setup()
       vansInSpot[y][x] = new int[0];
       bridges[y][x] = 0;
       elev[y][x] = noise(float(x)*0.01, float(y)*0.01);
-      
-      if (elev[y][x] <= 0)
-      {
-        elev[y][x] = 0.01
-      }
       
       float dx = abs(float(x-w/2));
       
@@ -221,7 +170,7 @@ void setup()
       }
       
       elev[y][x] += (float(y)/float(y+10))*inf;
-      //water[y][x] = -(min(max(abs(noise((float(x)+float(h))*0.01, (float(y)/2+float(h))*0.01)-0.5),-0.013),0.013)-0.013)*riverDepth;
+      water[y][x] = -(min(max(abs(noise((float(x)+float(h))*0.01, (float(y)/2+float(h))*0.01)-0.5),-0.013),0.013)-0.013)*riverDepth;
       
       for(int z = 0; z < 10; z++)
       {
@@ -234,13 +183,9 @@ void setup()
       {
         color c = bb.pixels[x - cityLocX + (y - cityLocY) * bbWidth];
         
-        if(red(c) > 5)
+        if(red(c) > 0)
         {
           city[y][x] = random(0.0015, 0.0021) * (red(c) - 5);
-        }
-        else if(pow(random(0,1),2) > green(c) / 255)
-        {
-          city[y][x] = -0.01;
         }
         else
         {
@@ -253,11 +198,24 @@ void setup()
         city[y][x] = -1;
       }
       
-      if(elev[y][x] > maxH) maxH = elev[y][x];
-      if(elev[y][x] < minH) minH = elev[y][x];
-
-      //elev[y][x] = pow((elev[y][x]-minH)/(maxH-minH),2.8);
-      //elev[y][x] -= water[y][x];
+      if(elev[y][x] > maxH)
+      {
+        maxH = elev[y][x];
+      }
+      
+      if(elev[y][x] < minH)
+      {
+        minH = elev[y][x];
+      }
+    }
+  }
+  // mergeing theese two square-iterations with identical for-loop-commands
+  // causes a "java.lang.RuntimeException: java.lang.AssertionError"
+  // at internal rendering functions, called by void drawLand(int x, int y)
+  for(int y = 0; y < h; y++){
+    for(int x = 0; x < w; x++){
+      elev[y][x] = pow((elev[y][x]-minH)/(maxH-minH),2.8);
+      elev[y][x] -= water[y][x];
       
       if(elev[y][x] < oceanDepth)
       {
@@ -271,7 +229,7 @@ void setup()
       if(d > h*0.33)
       {
         float d2 = d-h*0.33;
-        #elev[y][x] -= pow(d2,2)*0.00001*effect;
+        elev[y][x] -= pow(d2,2)*0.00001*effect;
       }
       
       if(elev[y][x] > maxH2)
@@ -282,9 +240,15 @@ void setup()
       if(elev[y][x] < minH2)
       {
         minH2 = elev[y][x];
-      ]
-
-      //elev[y][x] = (elev[y][x]-minH2)/(maxH2-minH2);
+      }
+    }
+  }
+  // mergeing theese two square-iterations with identical for-loop-commands
+  // causes a "java.lang.RuntimeException: java.lang.AssertionError"
+  // at internal rendering functions, called by void drawLand(int x, int y)
+  for(int y = 0; y < h; y++){
+    for(int x = 0; x < w; x++){
+      elev[y][x] = (elev[y][x]-minH2)/(maxH2-minH2);
       tileColors[y][x] = colorify(x,y);
       
       if(city[y][x] > cityMax && dry(x,y) && dry(x+1,y) && dry(x,y+1) && dry(x+1,y+1) && 
@@ -294,8 +258,20 @@ void setup()
         YNX = x;
         YNY = y;
       }
+      
+      //if you want to disable water enable theese two if-checks:
+      //if (elev[y][x] < 0)
+      //{
+        //elev[y][x] = 0;
+      //}
+      
+      //if(water[y][x] >= 0)
+      //{
+        //water[y][x] = -1;
+      //}
     }
   }
+  
   for(int y = 0; y < h - 1; y++)
   {
     for(int x = 0; x < w - 1; x++)
@@ -370,6 +346,54 @@ void setup()
     }
   }
   
+  
+  for(int i = 0; i < camCoor.length; i++)
+  {
+    frL += camCoor[i][10];
+  }
+  
+  for(int i = 0; i < 8; i++)
+  {
+    prevCam[i] = -9999;
+  }
+  
+  for(int j = 0; j < 40; j++){
+    String k;
+    
+    if(j < 9)
+    {
+      k = "000"+(j+1);
+    }
+    else
+    {
+      k = "00"+(j+1);
+    }
+    
+    robotFace[j] = loadImage("robotFace"+k+".png");
+  }
+  
+  for(int i = 0; i < 3; i++)
+  {
+    for(int j = 0; j < 40; j++)
+    {
+      int j2 = (j+10)%40;
+      String k;
+      
+      if(j2 < 9)
+      {
+        k = "000"+(j2+1);
+      }
+      else
+      {
+        k = "00"+(j2+1);
+      }
+      
+      beginSign[i][j] = loadImage("begin"+(i+1)+"v"+k+".png");
+      endSign[i][j] = loadImage("end"+(i+1)+"v"+k+".png");
+    }
+  }
+  
+  
   for(int i = 0; i < vanCount; i++)
   {
     int x = 4;
@@ -402,7 +426,7 @@ void setup()
         {
           if(water[y3][x3] > 0)
           {
-            trees[y][x] = -0.012;
+            trees[y][x] = -1;
             break;
           }
         }
@@ -412,7 +436,7 @@ void setup()
       
       if(thisElev > 0.7 || thisElev < 0.17)
       {
-        trees[y][x] = -0.012;
+        trees[y][x] = -1;
       }
       
       if(trees[y][x] > 0)
@@ -420,13 +444,28 @@ void setup()
         if(x2 >= cityLocX && x2 < cityLocX + bbWidth && y2 >= cityLocY && y2 < cityLocY + bbHeight)
         {
           color c = bb.pixels[x2 - cityLocX + (y2 - cityLocY) * bbWidth];
-          trees[y][x] -= (1 - green(c) / 255.0) * 0.0121;
+          if(red(c) == 0)
+          {
+            trees[y][x] -= (1 - green(c) / 255.0) * 0.0121;
+          }
+          else
+          {
+            trees[y][x] = -1;
+          }
+        }
+        else
+        {
+          trees[y][x] = -1;
+        }
+        
+        if(thisElev < 0.26)
+        {
+          trees[y][x] -= (0.26 - thisElev) / 0.06*0.012;
         }
       }
-      
-      if(thisElev < 0.26)
+      else
       {
-        trees[y][x] -= (0.26 - thisElev) / 0.06*0.012;
+        trees[y][x] = -1;
       }
       
       treeTileColors[y][x] = treeColorify(x,y);
@@ -774,7 +813,6 @@ void draw()
   }
   if(camMode == 1){
     println(timer/36.0);
-    //saveFrame("imagesFINAL\\####.png");
     println("Frames: "+timer+"/"+frL+",   that's "+
     ((float(timer)/frL)*100)+"% done in "+(float(millis())/60000)+" minutes.  Est. time left = "+
     ((float(millis()-sumill)/timer)*(frL-timer)/60000)+" minutes");
@@ -782,6 +820,8 @@ void draw()
     if(full == 2)saveFrame("stillImages2\\higher.png");
   }
 }
+
+
 void addVan(int i, int x, int y){
   int[] ph = vansInSpot[y][x];
   vansInSpot[y][x] = new int[ph.length+1];
@@ -1127,7 +1167,9 @@ void drawHoriRoad(int x, int y){
     vertex(x+1,y+roadWidth,inter(e01,e11,roadWidth)*slope+roadHeight);
     vertex(x+1,y,e01*slope+roadHeight);
     endShape();
-  }else{
+  }
+  else
+  {
     beginShape();
     texture(roadImage);
     vertex(x+roadWidth,y,inter(e00,e01,roadWidth)*slope+roadHeight,0,0);
@@ -2665,6 +2707,8 @@ boolean collides(int x, int y, int z){
   }
   return false;
 }
+
+
 void setYNCoords(){
   float cylHeight = 3;
   float cylSpace = 0.3;
@@ -2685,6 +2729,8 @@ void setYNCoords(){
     }
   }
 }
+
+
 int[] HSL2RGB(float hue, float sat, float lum){
     float v;
     float red, green, blue;
@@ -2789,8 +2835,12 @@ color fill2(int x, int y){
     return fogged(x,y,false);
   }
 }
-void drawLand(int x, int y){
-  if(tri[y][x]){
+
+
+void drawLand(int x, int y)
+{
+  if(tri[y][x])
+  {
     beginShape();
     fill(fill2(x,y));
     vertex(x,y,elev[y][x]*slope);
@@ -2808,7 +2858,9 @@ void drawLand(int x, int y){
     fill(fill2(x,y+1));
     vertex(x,y+1,elev[y+1][x]*slope);
     endShape(CLOSE);
-  }else{
+  }
+  else
+  {
     beginShape();
     fill(fill2(x,y));
     vertex(x,y,elev[y][x]*slope);
@@ -2827,38 +2879,28 @@ void drawLand(int x, int y){
     vertex(x,y+1,elev[y+1][x]*slope);
     endShape(CLOSE);
   }
-  if(x == w/2+5 && y >= int(sludgeProg)){
+  
+  if(x == w/2+5 && y >= int(sludgeProg))
+  {
     float e00 = elev[y][x];
     float e01 = elev[y][x+1];
     float e10 = elev[y+1][x];
     float e11 = elev[y+1][x+1];
     float wayz = 0;
     float lineWayz = 0;
-    if(y == int(sludgeProg)) wayz = sludgeProg-int(sludgeProg);
-    if(y == int(sludgeProg+0.06)) lineWayz = (sludgeProg+0.06)-int(sludgeProg+0.06);
-    /*setShade4(150,x,y,elev[y][x]*slope);
-    pushMatrix();
-    translate(x,y,0);
-    scale(0.1);
-    if(y >= int(sludgeProg+0.06)){
-      if(lineWayz == 0){
-        beginShape();
-        vertex(roadWidth*0.67*10,0,(inter(e00,e01,roadWidth*0.67)*slope+roadHeight*0.3)*10);
-        vertex(roadWidth*0.73*10,0,(inter(e00,e01,roadWidth*0.73)*slope+roadHeight*0.3)*10);
-        vertex(roadWidth*0.73*10,10,(inter(e10,e11,roadWidth*0.73)*slope+roadHeight*0.3)*10);
-        vertex(roadWidth*0.67*10,10,(inter(e10,e11,roadWidth*0.67)*slope+roadHeight*0.3)*10);
-        endShape();
-      }else{
-        beginShape();
-        vertex(roadWidth*0.67*10,lineWayz*10,(inter(inter(e00,e01,roadWidth*0.67),inter(e10,e11,roadWidth*0.67),lineWayz)*slope+roadHeight*0.3)*10);
-        vertex(roadWidth*0.73*10,lineWayz*10,(inter(inter(e00,e01,roadWidth*0.73),inter(e10,e11,roadWidth*0.73),lineWayz)*slope+roadHeight*0.3)*10);
-        vertex(roadWidth*0.73*10,10,(inter(e10,e11,roadWidth*0.73)*slope+roadHeight*0.3)*10);
-        vertex(roadWidth*0.67*10,10,(inter(e10,e11,roadWidth*0.67)*slope+roadHeight*0.3)*10);
-        endShape();
-      }
+    
+    if(y == int(sludgeProg))
+    {
+      wayz = sludgeProg-int(sludgeProg);
     }
-    popMatrix();*/
-    if(y == int(sludgeProg)){  
+    
+    if(y == int(sludgeProg+0.06))
+    {
+      lineWayz = (sludgeProg+0.06)-int(sludgeProg+0.06);
+    }
+
+    if(y == int(sludgeProg))
+    {  
       pushMatrix();
       float xBot = 200;
       float yBot = 200;
@@ -2868,14 +2910,12 @@ void drawLand(int x, int y){
       scale(-1,-1,1);
       rotateX(atan2((e00-e10)*slope,1));
       rotateY(-atan2((e00-e01)*slope,1));
-      //van.draw();
       
       float s = 5;
       float sRad = 1.3;
       float vibrate = 0.18;
       float tireHeight = sRad*0.9-abs((timer%6)-3)*vibrate;
       int[] c = {60,60,60};
-      //drawBlockRaw(0,0,s,s,0+tireHeight,s*2,xBot,yBot,zBot,c,true,false);
       translate(0,0,sRad*1.55);
       
       beginShape();
