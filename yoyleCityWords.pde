@@ -209,7 +209,7 @@ void setup()
       }
     }
   }
-  // mergeing theese two square-iterations with identical for-loop-commands
+  // mergeing theese two square-iterations with identical for-loop-instructions in theround brackets
   // causes a "java.lang.RuntimeException: java.lang.AssertionError"
   // at internal rendering functions, called by void drawLand(int x, int y)
   for(int y = 0; y < h; y++){
@@ -243,7 +243,7 @@ void setup()
       }
     }
   }
-  // mergeing theese two square-iterations with identical for-loop-commands
+  // mergeing theese two square-iterations with identical for-loop-instructions in theround brackets
   // causes a "java.lang.RuntimeException: java.lang.AssertionError"
   // at internal rendering functions, called by void drawLand(int x, int y)
   for(int y = 0; y < h; y++){
